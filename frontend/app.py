@@ -100,7 +100,7 @@ selected_model = 'gemma2:2b'
 with st.sidebar:
     st.title('Physics ChatBOT 🦙')
     st.subheader('Models and parameters')
-    selected_model = st.selectbox('Choose a model', ['gemma2:2b', 'gemma2:latest', 'llama3.1:8b'], key='selected_model')
+    selected_model = st.selectbox('Choose a model', ['gemma2:2b', 'phi3.5:latest', 'qwen2.5:1.5b', 'gemma2:latest', 'llama3.1:8b', 'koesn/mistral-7b-instruct:Q4_0'], key='selected_model')
 
 
 
@@ -110,6 +110,7 @@ def show_chat():
         with st.chat_message(message["role"]):
             st.write(message["content"])
 show_chat()
+
 
 # Function to clear chat history
 def clear_chat_history():
@@ -122,6 +123,28 @@ def clear_chat_history():
         get_chat_history()
     else:
         print("Failed to connect to the server. Please try again later.")
+
+
+def format_response(response):
+    """
+    Format the assistant's response for display in Streamlit.
+
+    Parameters:
+    response (str): The raw response containing LaTeX and text.
+
+    Returns:
+    str: Formatted Markdown string for Streamlit.
+    """
+    # Replace single backslashes with double backslashes for LaTeX
+    formatted_response = response.replace('\\', '\\\\')
+
+    # Replace inline LaTeX delimiters
+    formatted_response = formatted_response.replace('[', '$').replace(']', '$')
+
+    # Replace block LaTeX delimiters
+    formatted_response = formatted_response.replace('$$', '$$').replace('[', '$$').replace(']', '$$')
+
+    return formatted_response
 
 
 
@@ -160,7 +183,8 @@ if prompt := st.chat_input("Enter a message...", key="prompt"):
                 if response2.status_code == 200:
                     print("Success")
                     st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
-                    st.write(assistant_reply) 
+                    assistant_reply = format_response(assistant_reply)
+                    st.markdown(assistant_reply) 
                 else:   
                     print("Failed to connect to the server. Please try again later.")
                 
