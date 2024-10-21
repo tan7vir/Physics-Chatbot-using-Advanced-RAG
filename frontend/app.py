@@ -1,5 +1,5 @@
 import streamlit as st
-import requests
+import requests, re
 from config import FETCH_COLLECTION_URL, FETCH_CHAT_URL, DELETE_CHAT_URL, ADD_RESPONSE_URL
 
 # Set backend URL
@@ -100,7 +100,7 @@ selected_model = 'gemma2:2b'
 with st.sidebar:
     st.title('Physics ChatBOT 🦙')
     st.subheader('Models and parameters')
-    selected_model = st.selectbox('Choose a model', ['gemma2:2b', 'phi3.5:latest', 'qwen2.5:1.5b', 'gemma2:latest', 'llama3.1:8b', 'koesn/mistral-7b-instruct:Q4_0'], key='selected_model')
+    selected_model = st.selectbox('Choose a model', ['gemma2:2b', 'phi3.5:latest', 'qwen2.5:0.5b', 'qwen2.5:3b', 'qwen2.5:1.5b', 'gemma2:latest', 'llama3.1:8b', 'koesn/mistral-7b-instruct:Q4_0'], key='selected_model')
 
 
 
@@ -125,28 +125,21 @@ def clear_chat_history():
         print("Failed to connect to the server. Please try again later.")
 
 
-def format_response(response):
-    """
-    Format the assistant's response for display in Streamlit.
-
-    Parameters:
-    response (str): The raw response containing LaTeX and text.
-
-    Returns:
-    str: Formatted Markdown string for Streamlit.
-    """
-    # Replace single backslashes with double backslashes for LaTeX
-    formatted_response = response.replace('\\', '\\\\')
-
-    # Replace inline LaTeX delimiters
-    formatted_response = formatted_response.replace('[', '$').replace(']', '$')
-
-    # Replace block LaTeX delimiters
-    formatted_response = formatted_response.replace('$$', '$$').replace('[', '$$').replace(']', '$$')
-
-    return formatted_response
+def process_response(reply):
+    """Replace \[ with $$ and \] with $$ in a string."""
+    reply = reply.replace(r'\[', '$$').replace(r'\]', '$$')
+    
+    # Use regex to find patterns that start with (/, followed by any characters, and end with )
+    modified_reply = re.sub(r'\(\s*/.*?\s*\)', r'$$\g<0>$$', reply)
+    
+    return modified_reply
 
 
+mathjax_script = """
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+"""
 
 # For the chat history buttons
 if ( variable_name != "empty" or variable_name != ""):
@@ -181,10 +174,11 @@ if prompt := st.chat_input("Enter a message...", key="prompt"):
                 
                 response2 = requests.post(add_response_url, json={"content": prompt, "AssisContent": assistant_reply})
                 if response2.status_code == 200:
-                    print("Success")
+                    print("Success") 
+                    print (assistant_reply)
+                    assistant_reply = process_response(assistant_reply)
                     st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
-                    assistant_reply = format_response(assistant_reply)
-                    st.markdown(assistant_reply) 
+                    st.markdown(mathjax_script + assistant_reply, unsafe_allow_html=True)
                 else:   
                     print("Failed to connect to the server. Please try again later.")
                 
