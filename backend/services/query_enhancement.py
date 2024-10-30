@@ -6,23 +6,23 @@ from config.config import GENERATE_API_URL, SECONDARY_MODEL
 
 # Define the prompt template for generating responses
 PROMPT_TEMPLATE = """
-    You are creating questions for 9-10 grade students. Given the following prompt: '{prompt}', rewrite it into 5 more refined and specific questions. Provide only the questions, without any additional information or context.
+    You are creating questions for 9-10 grade students. Given the following question: '{prompt}' and the supporting context: '{context_texts}', rewrite the original question into 5 more refined and specific questions that are based on this context. Provide only the questions, without any additional information or context.
     """
 
-def query_enhncement ( question ):
+def query_enhncement ( question, context_texts):
     
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-    prompt = prompt_template.format(prompt=question)
+    prompt = prompt_template.format(prompt=question, context_texts = context_texts)
 
-    print("/")
-    print("/")
-    print("/")
-    print("/")
-    print ( "------------prompt----------------")
-    print("/")
-    print("/")
-    print("/")
-    print ( prompt )
+    # print("/")
+    # print("/")
+    # print("/")
+    # print("/")
+    # print ( "------------Real Q----------------")
+    # print("/")
+    # print("/")
+    # print("/")
+    # print ("Question: ", question)
 
     payload = {
         "model": SECONDARY_MODEL,

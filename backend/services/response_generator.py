@@ -7,6 +7,7 @@ from config.config import (
     GENERATE_API_URL, 
     PDF_PATH, 
     VECTOR_DB_PATH, 
+    SUMMARY_MODEL,
     SECONDARY_MODEL  # Import configuration constants
 )
 
@@ -19,23 +20,42 @@ from utils.logger import setup_logger
 # Set up the logger for the response generator
 response_logger = setup_logger("response_generator")
 
+summary = ""
+
 # Define the prompt template for generating responses
 PROMPT_TEMPLATE = """
-You are a physics assistant for 9-10 grade students, providing clear, concise, and age-appropriate explanations based on the following context:
+You are a physics assistant for 9-10 grade students. Answer the following question with clear, concise, and age-appropriate explanations, using the summary to maintain context from previous conversations and ensure relevance and continuity:
 
-**Context:**
-{context}
-**Answer the following question:**
-**Question:**
+**Summary of Previous Conversation:**  
+{summary} *(Use this summary to ensure the answer ties back to what has already been discussed and builds on previous knowledge.)*
+
+**Context:**  
+{context} *(Refer to this for additional details that directly support answering the question.)*
+
+**Answer the following question:**  
+**Question:**  
 {question}
 
 **Instructions:**
-1. 📘 **For factual questions**: Provide a direct answer, possibly with a brief explanation if necessary. Keep it concise. Example: "The boiling point of water is 100°C, which is when water turns to vapor."
-2. 📖 **For elaborate questions**: Offer a detailed explanation with an example. Encourage further thinking by posing a follow-up question. Example: "Energy is conserved in isolated systems. Think about how this applies when you throw a ball into the air."
-3. 🧮 **For mathematical questions**: Start with the necessary theories, then provide a step-by-step solution using LaTeX for clarity, and conclude with the final answer neatly formatted. Example: "To find the force, use F=ma. For a mass of 10 kg and acceleration 5 m/s², F = 50 N."
+
+1. 📘 **For factual questions**: Provide a direct answer, possibly with a brief explanation if necessary. Keep it concise. For example, "The boiling point of water is 100°C, which is when water turns to vapor."
+2. 📖 **For elaborate questions**: Offer a detailed explanation with an example. Encourage further thinking by posing a follow-up question. For example, "Energy is conserved in isolated systems. Think about how this applies when you throw a ball into the air."
+3. 🧮 **For mathematical questions**: Start with the necessary theories, then provide a step-by-step solution using LaTeX for clarity, and conclude with the final answer neatly formatted. For example, "To find the force, use F=ma. For a mass of 10 kg and acceleration 5 m/s², F = 50 N."
 
 🚀 **Keep it fun and engaging!** Use emojis to lighten the tone and enhance readability. Encourage curiosity and exploration to make learning enjoyable.
 """
+
+SUMMARY_TEMPLATE = """Generate a brief summary of this conversation with only the main question and essential points from the response in a single, compact sentence. Keep the summary short, suitable for adding to an ongoing chat history.
+
+User's Question:
+{user_context}
+
+Model's Response:
+{response_context}
+
+response will be like: 'User asked: summary of the question. Response: concise summary of the response.
+"""
+
 
 def load_books():
     """Load and chunk the PDF pages, then feed them to the vector database."""
@@ -51,7 +71,7 @@ def get_response(data: dict) -> dict:
 
     # Load the books (optional; uncomment if you want to load books every time)
     # load_books()
-
+    global summary
     emb_fn = OllamaEmbeddings(model=EMBEDDING_MODEL)  # Use the config constant
     collection_name = "PhysicsBook"
 
@@ -70,7 +90,7 @@ def get_response(data: dict) -> dict:
     context_texts.append(context_text)
 
     # Enhance the original question
-    enhanced_questions = query_enhncement(data.get('prompt'))
+    enhanced_questions = query_enhncement(data.get('prompt'), context_texts)
 
     # Loop through each enhanced question to perform similarity searches
     for question in enhanced_questions:
@@ -86,10 +106,10 @@ def get_response(data: dict) -> dict:
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     
     # Format the prompt with context and the user's question
-    prompt = prompt_template.format(context=context_text, question=data.get('prompt'))
+    prompt = PROMPT_TEMPLATE.format(context=context_text, question=data.get('prompt'), summary = summary)
 
     # For debugging purposes
-    print(prompt)
+    # print(prompt)
 
     # Prepare the data payload with the user's prompt
     payload = {
@@ -97,7 +117,6 @@ def get_response(data: dict) -> dict:
         "prompt": prompt,
         "stream": False
     }
-
     # Send a POST request to generate the response
     response = requests.post(GENERATE_API_URL, json=payload)  # Use the config constant
     response_logger.info("Response generated")
@@ -110,6 +129,23 @@ def get_response(data: dict) -> dict:
         response_data = response.json()
         response_text = response_data.get('response', '').strip()  # Clean the response text
 
+        # For Summary
+        prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+        prompt = SUMMARY_TEMPLATE.format(user_context=data.get('prompt'), response_context=response_text)
+
+        payload = {
+            "model": SUMMARY_MODEL,   # SECONDARY_MODEL
+            "prompt": prompt,
+            "stream": False
+        }
+
+        response = requests.post(GENERATE_API_URL, json=payload)
+
+        if response.status_code == 200:
+              response_data = response.json()
+              summary_temp = response_data.get('response', '').strip() 
+
+              summary += summary_temp + "\n"
         return {
             "response": response_text,
             "sources": sources

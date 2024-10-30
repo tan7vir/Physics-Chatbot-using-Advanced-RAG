@@ -9,3 +9,4 @@ GENERATE_API_URL = "http://localhost:11434/api/generate"  # URL for the response
 # GENERATE_API_URL = "http://127.0.0.1:11434/api/generate"  # URL for the response generation API
 VECTOR_DB_PATH = "../Data/vectorDB"
 SECONDARY_MODEL = "qwen2.5:1.5b"
+SUMMARY_MODEL = "qwen2.5:3b"
