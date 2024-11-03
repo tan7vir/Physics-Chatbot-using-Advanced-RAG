@@ -72,7 +72,7 @@ st.markdown(
         background-color: #B8001F;
     }
 
-    .st-emotion-cache-12h5x7g p, .stHeading h1, .stHeading h2, .stHeading h3, .stSelectbox p, .stMarkdown p{
+    .st-emotion-cache-12h5x7g p, .stHeading h1, .stHeading h2, .stHeading h3, .stSelectbox p, .stMarkdown p, math, st-emotion-cache-pgf13w p, st-emotion-cache-pgf13w li, mathkatex-html span {
         color: #FCFAEE;
     }
 
@@ -96,19 +96,37 @@ if "messages" not in st.session_state:
 
 
 # Sidebar for settings
-selected_model = 'gemma2:2b'
+selected_model = 'qwen2.5'
 with st.sidebar:
     st.title('Physics ChatBOT 🦙')
     st.subheader('Models and parameters')
-    selected_model = st.selectbox('Choose a model', ['gemma2:2b', 'phi3.5:latest', 'qwen2.5:0.5b', 'qwen2.5:3b', 'qwen2.5:1.5b', 'gemma2:latest', 'llama3.1:8b', 'koesn/mistral-7b-instruct:Q4_0'], key='selected_model')
+    selected_model = st.selectbox('Choose a model', ['qwen2.5','gemma2:2b', 'phi3.5:latest', 'qwen2-math:1.5b', 'qwen2.5:0.5b', 'qwen2.5:3b', 'qwen2.5:1.5b', 'gemma2:latest', 'llama3.1:8b', 'koesn/mistral-7b-instruct:Q4_0'], key='selected_model')
 
+
+def process_response(reply):
+    """Replace [ and ] with $$ and wrap text in ( \command ) with $$. """
+    # Replace square brackets with $$
+    reply = reply.replace(r'\[', '$$').replace(r'\]', '$$')
+    
+    # Use regex to find patterns that start with (/, followed by LaTeX commands, and end with )
+    # and wrap the matched text in $$
+    modified_reply = reply.replace(r'\(', '$$').replace(r'\)', '$$')
+    
+    return modified_reply
+
+# for latex
+mathjax_script = """
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+"""
 
 
 # Display existing chat messages
 def show_chat():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            st.write(message["content"])
+            st.markdown(mathjax_script + message["content"], unsafe_allow_html=True)
 show_chat()
 
 
@@ -124,22 +142,6 @@ def clear_chat_history():
     else:
         print("Failed to connect to the server. Please try again later.")
 
-
-def process_response(reply):
-    """Replace \[ with $$ and \] with $$ in a string."""
-    reply = reply.replace(r'\[', '$$').replace(r'\]', '$$')
-    
-    # Use regex to find patterns that start with (/, followed by any characters, and end with )
-    modified_reply = re.sub(r'\(\s*/.*?\s*\)', r'$$\g<0>$$', reply)
-    
-    return modified_reply
-
-
-mathjax_script = """
-<script type="text/javascript" async
-  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
-</script>
-"""
 
 # For the chat history buttons
 if ( variable_name != "empty" or variable_name != ""):
@@ -169,14 +171,14 @@ if prompt := st.chat_input("Enter a message...", key="prompt"):
                 if response.status_code == 200:
                     data = response.json()
                     assistant_reply = data.get("response", "Failed to connect.")
+                    assistant_reply = process_response(assistant_reply)
                 else:
                     assistant_reply = "Failed to connect to the server. Please try again later in generation"
                 
                 response2 = requests.post(add_response_url, json={"content": prompt, "AssisContent": assistant_reply})
                 if response2.status_code == 200:
                     print("Success") 
-                    print (assistant_reply)
-                    assistant_reply = process_response(assistant_reply)
+                    
                     st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
                     st.markdown(mathjax_script + assistant_reply, unsafe_allow_html=True)
                 else:   

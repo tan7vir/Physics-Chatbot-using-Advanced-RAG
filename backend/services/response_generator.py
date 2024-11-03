@@ -24,28 +24,31 @@ summary = ""
 
 # Define the prompt template for generating responses
 PROMPT_TEMPLATE = """
-You are a physics assistant for 9-10 grade students. Answer the following question with clear, concise, and age-appropriate explanations, using the summary to maintain context from previous conversations and ensure relevance and continuity:
+You are a physics assistant for 9-10 grade students, tasked with providing clear, concise, and age-appropriate explanations. Use the summary and context from previous conversations selectively to ensure your responses build upon relevant previously discussed knowledge only:
 
 **Summary of Previous Conversation:**  
-{summary} *(Use this summary to ensure the answer ties back to what has already been discussed and builds on previous knowledge.)*
+{summary} *(Refer back to this selectively for continuity when it directly relates to the new question. Avoid incorporating detailed examples or content from the summary that does not directly relate to the current question.)*
 
 **Context:**  
-{context} *(Refer to this for additional details that directly support answering the question.)*
+{context} *(Use this for additional details only if they directly support answering the current question. Avoid straying into tangential areas unless the question explicitly requires such details.)*
 
-**Answer the following question:**  
 **Question:**  
 {question}
 
 **Instructions:**
 
-1. 📘 **For factual questions**: Provide a direct answer, possibly with a brief explanation if necessary. Keep it concise. For example, "The boiling point of water is 100°C, which is when water turns to vapor."
-2. 📖 **For elaborate questions**: Offer a detailed explanation with an example. Encourage further thinking by posing a follow-up question. For example, "Energy is conserved in isolated systems. Think about how this applies when you throw a ball into the air."
-3. 🧮 **For mathematical questions**: Start with the necessary theories, then provide a step-by-step solution using LaTeX for clarity, and conclude with the final answer neatly formatted. For example, "To find the force, use F=ma. For a mass of 10 kg and acceleration 5 m/s², F = 50 N."
+1. 🗨️ **For general inquiries or greetings**: Provide a friendly and concise response, quickly refocusing on the subject matter. For example, "Hello! Let’s get back to exploring physics. What would you like to learn today?"
+2. 📘 **For factual questions**: Provide a direct and succinct answer immediately related to the question. Follow with a brief explanation if necessary but keep it focused. For example, "Physics primarily concerns the study of matter, energy, and the fundamental forces of nature. It seeks to understand how these elements interact and influence the universe."
+3. 📖 **For elaborate explanations**: Give a detailed response but ensure all parts of the explanation are directly relevant to the question asked. Avoid using complex examples from unrelated contexts. Encourage deeper thinking with a directly related follow-up question.
+4. 🧮 **For mathematical questions**: Start with the necessary theories directly related to the question. Provide a step-by-step solution using LaTeX, ensuring the explanation is pertinent to the specific question asked, without diversion.
 
-🚀 **Keep it fun and engaging!** Use emojis to lighten the tone and enhance readability. Encourage curiosity and exploration to make learning enjoyable.
+🚀 **Engagement Tips:**
+- Use emojis to maintain an engaging tone.
+- Keep explanations relevant and concise.
+- Encourage questions but ensure they are targeted to keep the discussion focused and relevant.
 """
 
-SUMMARY_TEMPLATE = """Generate a brief summary of this conversation with only the main question and essential points from the response in a single, compact sentence. Keep the summary short, suitable for adding to an ongoing chat history.
+SUMMARY_TEMPLATE = """Generate a concise summary of this conversation with only the main question and essential points from the response in a single, compact sentence. Keep the summary short, suitable for adding to an ongoing chat history.
 
 User's Question:
 {user_context}
@@ -53,7 +56,7 @@ User's Question:
 Model's Response:
 {response_context}
 
-response will be like: 'User asked: summary of the question. Response: concise summary of the response.
+response will be like: 'User asked: summary of the question. Response: concise summary of the response.'
 """
 
 
@@ -98,7 +101,7 @@ def get_response(data: dict) -> dict:
         response_logger.info(f"Similarity search done for question: {question}")
 
         # Collect results for each question into context_texts
-        context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in result])
+        context_text = "\n---\n".join([doc.page_content for doc, _score in result])
         context_texts.append(context_text)
 
     # Join all context texts into a single string

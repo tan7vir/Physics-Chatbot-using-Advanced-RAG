@@ -6,7 +6,7 @@ from config.config import GENERATE_API_URL, SECONDARY_MODEL
 
 # Define the prompt template for generating responses
 PROMPT_TEMPLATE = """
-    You are creating questions for 9-10 grade students. Given the following question: '{prompt}' and the supporting context: '{context_texts}', rewrite the original question into 5 more refined and specific questions that are based on this context. Provide only the questions, without any additional information or context.
+    You are creating questions for 9-10 grade students. Given the following question: '{prompt}' and the supporting context: '{context_texts}', rewrite the original question into 5 more refined and specific questions that are based on this context. If the context is not relavent just ignore them. Provide only the questions, without any additional information or context.
     """
 
 def query_enhncement ( question, context_texts):
