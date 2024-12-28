@@ -24,15 +24,15 @@ summary = ""
 
 # Define the prompt template for generating responses
 PROMPT_TEMPLATE = """
-You are a physics assistant for 9-10 grade students, tasked with providing clear, concise, and age-appropriate explanations. Use the summary and context from previous conversations selectively to ensure your responses build upon relevant previously discussed knowledge only:
+You are a physics assistant for 9-10 grade students, tasked with providing clear, concise, and age-appropriate explanations. Use the chat History and context from previous conversations selectively to ensure your responses build upon relevant previously discussed knowledge only:
 
-**Summary of Previous Conversation:**  
-{summary} *(Refer back to this selectively for continuity when it directly relates to the new question. Avoid incorporating detailed examples or content from the summary that does not directly relate to the current question.)*
+**Chat History:**
+{summary} *(Refer back to this selectively for continuity when it directly relates to the new question. Avoid incorporating detailed examples or content from the chat History that does not directly relate to the current question.)*
 
-**Context:**  
+**Context:**
 {context} *(Use this for additional details only if they directly support answering the current question. Avoid straying into tangential areas unless the question explicitly requires such details.)*
 
-**Question:**  
+**Question:**
 {question}
 
 **Instructions:**
@@ -41,8 +41,9 @@ You are a physics assistant for 9-10 grade students, tasked with providing clear
 2. 📘 **For factual questions**: Provide a direct and succinct answer immediately related to the question. Follow with a brief explanation if necessary but keep it focused. For example, "Physics primarily concerns the study of matter, energy, and the fundamental forces of nature. It seeks to understand how these elements interact and influence the universe."
 3. 📖 **For elaborate explanations**: Give a detailed response but ensure all parts of the explanation are directly relevant to the question asked. Avoid using complex examples from unrelated contexts. Encourage deeper thinking with a directly related follow-up question.
 4. 🧮 **For mathematical questions**: Start with the necessary theories directly related to the question. Provide a step-by-step solution using LaTeX, ensuring the explanation is pertinent to the specific question asked, without diversion.
-
+5. If the quetion is explain the topics, explain the theories then discuss about the topics you have talked in the last response.
 🚀 **Engagement Tips:**
+- use the chat history and context only if it is related to the Question.
 - Use emojis to maintain an engaging tone.
 - Keep explanations relevant and concise.
 - Encourage questions but ensure they are targeted to keep the discussion focused and relevant.
@@ -132,23 +133,32 @@ def get_response(data: dict) -> dict:
         response_data = response.json()
         response_text = response_data.get('response', '').strip()  # Clean the response text
 
+        summary += "Question: "
+        summary += data.get('prompt')
+        summary += "\n"
+        summary += " Response: "
+        summary += response_text
+        summary += "\n"
+        # print ("----------------------------Starting of summary-----------------------------------------")
+        # print (summary )
+        # print ("----------------------------End of summary-----------------------------------------")
         # For Summary
-        prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
-        prompt = SUMMARY_TEMPLATE.format(user_context=data.get('prompt'), response_context=response_text)
+        # prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+        # prompt = SUMMARY_TEMPLATE.format(user_context=data.get('prompt'), response_context=response_text)
 
-        payload = {
-            "model": SUMMARY_MODEL,   # SECONDARY_MODEL
-            "prompt": prompt,
-            "stream": False
-        }
+        # payload = {
+        #     "model": SUMMARY_MODEL,   # SECONDARY_MODEL
+        #     "prompt": prompt,
+        #     "stream": False
+        # }
 
-        response = requests.post(GENERATE_API_URL, json=payload)
+        # response = requests.post(GENERATE_API_URL, json=payload)
 
-        if response.status_code == 200:
-              response_data = response.json()
-              summary_temp = response_data.get('response', '').strip() 
+        # if response.status_code == 200:
+        #       response_data = response.json()
+        #       summary_temp = response_data.get('response', '').strip() 
 
-              summary += summary_temp + "\n"
+        #       summary += summary_temp + "\n"
         return {
             "response": response_text,
             "sources": sources

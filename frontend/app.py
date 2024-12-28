@@ -96,7 +96,7 @@ if "messages" not in st.session_state:
 
 
 # Sidebar for settings
-selected_model = 'qwen2.5'
+selected_model = 'qwen2.5:3b'
 with st.sidebar:
     st.title('Physics ChatBOT 🦙')
     st.subheader('Models and parameters')
@@ -183,5 +183,4 @@ if prompt := st.chat_input("Enter a message...", key="prompt"):
                     st.markdown(mathjax_script + assistant_reply, unsafe_allow_html=True)
                 else:   
                     print("Failed to connect to the server. Please try again later.")
-                
-                
+    
