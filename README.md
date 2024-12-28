@@ -72,7 +72,7 @@ Feedback from diverse testers, including students and educators, highlighted the
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/physics-chatbot.git
+   git clone [https://github.com/your-username/physics-chatbot.git](https://github.com/tan7vir/Physics-Chatbot-using-Advanced-RAG)
    ```
 
 2. Navigate to the project directory:
